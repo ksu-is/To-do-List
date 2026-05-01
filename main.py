@@ -12,6 +12,7 @@ db = SQLAlchemy(app)
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
+    priority = db.Column(db.String(50), default='Medium')
     done = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -23,8 +24,9 @@ def create_tables():
 def index():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
+        priority = request.form.get("priority", "Medium")
         if title:
-            db.session.add(Task(title=title))
+            db.session.add(Task(title=title, priority=priority))
             db.session.commit()
         return redirect(url_for("index"))
 

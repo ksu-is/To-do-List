@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,42 +8,54 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
   <main class="container">
     <div class="header">
       <h1>To-Do List</h1>
-      <p class="subtitle">Organize your tasks efficiently</p>
+      <p class="subtitle">Developed by Evan Pollard</p>
     </div>
 
     <form method="POST" class="add-form">
       <input type="text" name="title" placeholder="What needs to be done?" required autocomplete="off" />
+      <select name="priority" class="priority-select">
+        <option value="Low!">Low</option>
+        <option value="Medium!!" selected>Medium</option>
+        <option value="High!!!">High</option>
+      </select>
       <button type="submit" class="btn-primary">Add Task</button>
     </form>
 
     <ul class="tasks">
       {% for task in tasks %}
-        <li class="task-item {{ 'done' if task.done else '' }}">
-          <form method="POST" action="{{ url_for('toggle_task', task_id=task.id) }}" class="toggle-form">
-            <button type="submit" class="btn-toggle {{ 'btn-undo' if task.done else 'btn-done' }}">
-              {{ 'Undo' if task.done else 'Complete' }}
-            </button>
-          </form>
+      <li class="task-item {{ 'done' if task.done else '' }}">
+        <form method="POST" action="{{ url_for('toggle_task', task_id=task.id) }}" class="toggle-form">
+          <button type="submit" class="btn-toggle {{ 'btn-undo' if task.done else 'btn-done' }}">
+            {{ 'Undo' if task.done else 'Complete' }}
+          </button>
+        </form>
 
-          <span class="task-title">{{ task.title }}</span>
+        <span class="task-title">{{ task.title }}</span>
+        <span class="priority-tag priority-{{ task.priority|lower }}">{{ task.priority }}</span>
 
-          <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" class="delete-form">
-            <button type="submit" class="btn-delete" aria-label="Delete task">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
-          </form>
-        </li>
+        <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" class="delete-form">
+          <button type="submit" class="btn-delete" aria-label="Delete task">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </form>
+      </li>
       {% else %}
-        <li class="empty-state">
-          <div class="empty-icon">📝</div>
-          <p>No tasks yet. Add one above!</p>
-        </li>
+      <li class="empty-state">
+        <div class="empty-icon">📝</div>
+        <p>No tasks yet. Add one above!</p>
+      </li>
       {% endfor %}
     </ul>
   </main>
 </body>
+
 </html>
