@@ -10,52 +10,141 @@
 </head>
 
 <body>
-  <main class="container">
-    <div class="header">
-      <h1>To-Do List</h1>
-      <p class="subtitle">Developed by Evan Pollard</p>
-    </div>
+  <header class="page-header">
+    <h1>Evan's To-Do List</h1>
+    <p class="subtitle">Stay organized and productive</p>
+  </header>
 
-    <form method="POST" class="add-form">
-      <input type="text" name="title" placeholder="What needs to be done?" required autocomplete="off" />
-      <select name="priority" class="priority-select">
-        <option value="Low!">Low</option>
-        <option value="Medium!!" selected>Medium</option>
-        <option value="High!!!">High</option>
-      </select>
-      <button type="submit" class="btn-primary">Add Task</button>
-    </form>
+  <main class="dashboard" id="dashboard">
+    {% for category in categories %}
+    <section class="tile" draggable="true" data-category="{{ category }}">
+      <div class="tile-header">
+        <div class="drag-handle">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2s-2 .9-2 2s.9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2z"/>
+          </svg>
+        </div>
+        <h2>{{ category }}</h2>
+      </div>
 
-    <ul class="tasks">
-      {% for task in tasks %}
-      <li class="task-item {{ 'done' if task.done else '' }}">
-        <form method="POST" action="{{ url_for('toggle_task', task_id=task.id) }}" class="toggle-form">
-          <button type="submit" class="btn-toggle {{ 'btn-undo' if task.done else 'btn-done' }}">
-            {{ 'Undo' if task.done else 'Complete' }}
-          </button>
-        </form>
+      <form method="POST" class="add-form">
+        <input type="hidden" name="category" value="{{ category }}">
+        <input type="text" name="title" placeholder="Add to {{ category }}..." required autocomplete="off" />
+        <select name="priority" class="priority-select">
+          <option value="Low">Low</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="High">High</option>
+        </select>
+        <button type="submit" class="btn-add">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        </button>
+      </form>
 
-        <span class="task-title">{{ task.title }}</span>
-        <span class="priority-tag priority-{{ task.priority|lower }}">{{ task.priority }}</span>
-
-        <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" class="delete-form">
-          <button type="submit" class="btn-delete" aria-label="Delete task">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-          </button>
-        </form>
-      </li>
-      {% else %}
-      <li class="empty-state">
-        <div class="empty-icon">📝</div>
-        <p>No tasks yet. Add one above!</p>
-      </li>
-      {% endfor %}
-    </ul>
+      <ul class="tasks">
+        {% for task in grouped_tasks[category] %}
+        <li class="task-item {{ 'done' if task.done else '' }}">
+          <div class="task-content">
+            <form method="POST" action="{{ url_for('toggle_task', task_id=task.id) }}" class="toggle-form">
+              <button type="submit" class="checkbox {{ 'checked' if task.done else '' }}" aria-label="Toggle task">
+                {% if task.done %}
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                {% endif %}
+              </button>
+            </form>
+            <span class="task-title">{{ task.title }}</span>
+          </div>
+          
+          <div class="task-actions">
+            <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+            <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" class="delete-form">
+              <button type="submit" class="btn-delete" aria-label="Delete task">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+              </button>
+            </form>
+          </div>
+        </li>
+        {% else %}
+        <li class="empty-state">
+          <p>No tasks yet</p>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
   </main>
+
+  <script>
+    let dragSrcEl = null;
+
+    function handleDragStart(e) {
+      dragSrcEl = this;
+      e.dataTransfer.effectAllowed = 'move';
+      this.classList.add('dragging');
+    }
+
+    function handleDragOver(e) {
+      if (e.preventDefault) {
+        e.preventDefault();
+      }
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+
+    function handleDragEnter(e) {
+      this.classList.add('over');
+    }
+
+    function handleDragLeave(e) {
+      this.classList.remove('over');
+    }
+
+    function handleDrop(e) {
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+
+      if (dragSrcEl !== this) {
+        const dashboard = document.getElementById('dashboard');
+        const tiles = Array.from(dashboard.children);
+        const srcIndex = tiles.indexOf(dragSrcEl);
+        const targetIndex = tiles.indexOf(this);
+
+        if (srcIndex < targetIndex) {
+          this.after(dragSrcEl);
+        } else {
+          this.before(dragSrcEl);
+        }
+      }
+      return false;
+    }
+
+    function handleDragEnd(e) {
+      document.querySelectorAll('.tile').forEach(tile => {
+        tile.classList.remove('dragging');
+        tile.classList.remove('over');
+      });
+    }
+
+    function initDraggable() {
+      const tiles = document.querySelectorAll('.tile');
+      tiles.forEach(tile => {
+        tile.addEventListener('dragstart', handleDragStart, false);
+        tile.addEventListener('dragenter', handleDragEnter, false);
+        tile.addEventListener('dragover', handleDragOver, false);
+        tile.addEventListener('dragleave', handleDragLeave, false);
+        tile.addEventListener('drop', handleDrop, false);
+        tile.addEventListener('dragend', handleDragEnd, false);
+      });
+    }
+
+    initDraggable();
+  </script>
 </body>
 
 </html>
